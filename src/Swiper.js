@@ -430,12 +430,37 @@ export default class SwiperAnimated extends PureComponent {
 
   calcScale = reversedIndex => 1 - ((reversedIndex) * 0.005);
 
-  jumpToIndex = (index) => {
-    this.currentIndex[this.guid] = index;
+  jumpToIndex = (index, isAnimated = false) => {
+    if (!isAnimated || index === this.currentIndex) {
+      this.currentIndex[this.guid] = index;
 
-    this.setState({
-      card: this.props.children[this.currentIndex[this.guid]],
-    });
+      this.setState({
+        card: this.props.children[this.currentIndex[this.guid]],
+      });
+    } else {
+      // left animation
+      let x = -500;
+
+      if (index < this.currentIndex) {
+        // right animation
+        x = 500;
+      }
+
+      this.cardAnimation = Animated.timing(this.pan, {
+        toValue: { x, y: 0 },
+      }).start((status) => {
+        this.resetState();
+        if (status.finished) {
+          this.currentIndex[this.guid] = index;
+          this.setState({
+            card: this.props.children[this.currentIndex[this.guid]],
+          });
+        }
+
+        this.cardAnimation = null;
+      });
+      this.props.onRemoveCard(this.currentIndex[this.guid]);
+    }
   }
 
   renderPagination = () => {
